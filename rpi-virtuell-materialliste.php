@@ -4,7 +4,7 @@
  * Plugin Name:  rpi-Virtuell Materialliste
  * Description:  Erzeuigt per Shortcode (vom Materialpool) eine Liste an Materialien
  * Plugin URI:   https://github.com/rpi-virtuell/rpi-virtuell-materialliste
- * Version:      1.0.1
+ * Version:      1.0.2
  * Author:       Frank Neumann-Staude
  * Author URI:   https://staude.net
  * Text Domain:  rpi-virtuell-materialliste
@@ -12,6 +12,7 @@
  * License URI:  https://www.gnu.org/licenses/gpl-2.0.html
  *
  */
+require_once(dirname(__FILE__).'/Template.php');
 
 add_action( 'init', 'rpivml_add_shortcode' );
 function rpivml_add_shortcode() {
@@ -50,27 +51,36 @@ function rpivml_materialliste( $atts ) {
 	}
 	$output = '';
 	$request = $url . $query;
-	$hashname = "rpiml_" . md5( $request);
+
+	$hashname = "q1rapiml_" . md5( $request);
 	if ( false === ( $output = get_transient( $hashname ) ) ) {
 		$response = rpivml_getRemoteMaterial( $request );
 		if ( $response !== false ) {
 			$body = wp_remote_retrieve_body( $response );
 			$data = json_decode( $body, true );
 			if ( is_array( $data ) ) {
-				$output .= rpivml_get_template( 'open', $a['template'] );
+				ob_start();
+				$h = \separate\Template::initialize(rpivml_get_template( 'open', $a['template'] ));
+				\separate\Template::display();
+				$h = \separate\Template::initialize(rpivml_get_template( 'content', $a['template'] ));
+
 				foreach ( $data as $inx => $remote_item_data ) {
-					$temp   = rpivml_get_template( 'content', $a['template'] );
-					$temp   = str_replace( '{material_title}', $remote_item_data['material_titel'], $temp );
-					$temp   = str_replace( '{material_screenshot}', "<img src=\"" . $remote_item_data['material_screenshot'] . "\">", $temp );
-					$temp   = str_replace( '{material_kurzbeschreibung}', $remote_item_data['material_kurzbeschreibung'], $temp );
-					$temp   = str_replace( '{material_beschreibung}', $remote_item_data['material_beschreibung'], $temp );
-					$temp   = str_replace( '{material_url}', $remote_item_data['material_url'], $temp );
-					$temp   = str_replace( '{material_review_url}', $remote_item_data['material_review_url'], $temp );
-					$temp   = str_replace( '{material_autoren}', rpimvl_get2array( $remote_item_data['material_autoren'] ), $temp );
-					$temp   = str_replace( '{material_medientyp}', rpimvl_getmedien2array( $remote_item_data['material_medientyp'] ), $temp );
-					$output .= $temp;
+					$rowBlock = $h->fetch('row');
+					$rowBlock->assign('material_title', $remote_item_data['material_titel']);
+					$rowBlock->assign('material_screenshot', "<img src=\"" . $remote_item_data['material_screenshot'] . "\">");
+					$rowBlock->assign('material_kurzbeschreibung', $remote_item_data['material_kurzbeschreibung'] );
+					$rowBlock->assign('material_beschreibung', $remote_item_data['material_beschreibung'] );
+					$rowBlock->assign('material_url', $remote_item_data['material_url']);
+					$rowBlock->assign('material_review_url', $remote_item_data['material_review_url'] );
+					$rowBlock->assign('material_autoren', rpimvl_get2array( $remote_item_data['material_autoren'] ) );
+					$rowBlock->assign('material_medientyp', rpimvl_getmedien2array( $remote_item_data['material_medientyp'] ) );
+					$h->assign('row', $rowBlock);
 				}
-				$output .= rpivml_get_template( 'close', $a['template'] );
+
+				\separate\Template::display();
+				$h = \separate\Template::initialize(rpivml_get_template( 'close', $a['template'] ));
+				\separate\Template::display();
+				$output = ob_get_clean();
 			}
 			set_transient( $hashname, $output, 24 * HOUR_IN_SECONDS );
 		}
@@ -104,7 +114,7 @@ function rpimvl_getmedien2array( $ar) {
 
 function rpivml_getRemoteMaterial( $url ) {
 	$args = array(
-		'timeout'     => 10,
+		'timeout'     => 30,
 		'sslverify' => false,
 	);
 	$response = wp_remote_get($url, $args );
@@ -123,17 +133,11 @@ function rpivml_getRemoteMaterial( $url ) {
 function rpivml_get_template( $type, $template ) {
 	$path = locate_template( apply_filters( 'rpivml_template_folder', 'rpivml-templates' ) . '/' . $template. '/' . $type . '.php' );
 	if ( $path != '' ) {
-		// Load from theme directory
-		ob_start();
-		require ( $path );
-		return ob_get_clean();
+		return $path;
 	} else {
-		// Load from plugin directory
 		$path = RPIVML_ABSPATH . "/templates/". $template. '/' . $type . '.php';
 		if ( file_exists( $path ) ) {
-			ob_start();
-			require ( $path );
-			return ob_get_clean();
+			return $path;
 		}
 	}
 }

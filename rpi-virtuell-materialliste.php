@@ -4,7 +4,7 @@
  * Plugin Name:  rpi-Virtuell Materialliste
  * Description:  Erzeuigt per Shortcode (vom Materialpool) eine Liste an Materialien
  * Plugin URI:   https://github.com/rpi-virtuell/rpi-virtuell-materialliste
- * Version:      1.0.2
+ * Version:      1.0.3
  * Author:       Frank Neumann-Staude
  * Author URI:   https://staude.net
  * Text Domain:  rpi-virtuell-materialliste
@@ -42,7 +42,6 @@ function rpivml_materialliste( $atts ) {
 	), $atts );
 
 	$url = "https://material.rpi-virtuell.de/wp-json/mymaterial/v1/material";
-	//$url = "https://acfmaterial.local/wp-json/mymaterial/v1/material";
 	$query = "?";
 	foreach ($a as $key => $value ) {
 		if ($value != '' && $key != 'template' ) {
@@ -51,8 +50,7 @@ function rpivml_materialliste( $atts ) {
 	}
 	$output = '';
 	$request = $url . $query;
-
-	$hashname = "q1rapiml_" . md5( $request);
+	$hashname = "rpiml_" . md5( $request);
 	if ( false === ( $output = get_transient( $hashname ) ) ) {
 		$response = rpivml_getRemoteMaterial( $request );
 		if ( $response !== false ) {
@@ -74,6 +72,7 @@ function rpivml_materialliste( $atts ) {
 					$rowBlock->assign('material_review_url', $remote_item_data['material_review_url'] );
 					$rowBlock->assign('material_autoren', rpimvl_get2array( $remote_item_data['material_autoren'] ) );
 					$rowBlock->assign('material_medientyp', rpimvl_getmedien2array( $remote_item_data['material_medientyp'] ) );
+					$rowBlock->assign('material_schlagworte', rpimvl_getschlagworte2array( $remote_item_data['material_schlagworte'] ) );
 					$h->assign('row', $rowBlock);
 				}
 
@@ -112,6 +111,17 @@ function rpimvl_getmedien2array( $ar) {
 	return ( implode( ', ', $temp ) );
 }
 
+function rpimvl_getschlagworte2array( $ar) {
+	$output = '';
+	$temp = array();
+	foreach ($ar as $key => $value ) {
+		foreach ($value as $key2 => $value2 ) {
+			if ( $key2 == "name")
+				$temp[] = $value2;
+		}
+	}
+	return ( implode( ', ', $temp ) );
+}
 function rpivml_getRemoteMaterial( $url ) {
 	$args = array(
 		'timeout'     => 30,

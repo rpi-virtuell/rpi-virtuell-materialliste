@@ -21,6 +21,9 @@
                             <!-- IF '${material_medientyp}' != '' -->
                             <p>Medientyp: ${material_medientyp}</p>
                             <!-- END IF -->
+                            <!-- IF '${material_schlagworte}' != '' -->
+                            <p>Schlagworte: ${material_schlagworte}</p>
+                            <!-- END IF -->
                             <p>
                             <a href='${material_url}'>Artikel lesen</a> · <a href='${material_review_url}'>Mehr dazu im rpi-virtuell Materialpool</a>
                             </p>

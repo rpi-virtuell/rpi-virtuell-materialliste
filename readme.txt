@@ -3,7 +3,7 @@ Contributors:f.staude
 Tags: page, list, subpages, siblings, pagelist
 Requires at least: 4.0
 Tested up to: 4.5.2
-Stable tag: 1.0.1
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -11,7 +11,7 @@ Adds a shortcode to list https://material.rpi-virtuell.de entrys. To create a sh
 
 == Description ==
 
-This WordPress plugin list subpages and sliblings from a page via shortcode and supports templates for the list.
+
 
 
 == Installation ==
@@ -32,6 +32,11 @@ Yes
 Yes, use the filter hook 'extended_pagelist_template_folder' to change the directory
 
 == Changelog ==
+= 1.0.3 =
+[add] Material Schlagworte
+
+= 1.0.2 =
+[add] template language
 
 = 1.0.1 =
 First public version.

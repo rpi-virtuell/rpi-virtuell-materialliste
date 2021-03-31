@@ -2,9 +2,9 @@
 
 /**
  * Plugin Name:  rpi-Virtuell Materialliste
- * Description:  Erzeuigt per Shortcode (vom Materialpool) eine Liste an Materialien
+ * Description:  Gibt via Shortcode eine Liste von Materialien aus dem rpi-virtuell Materialpool aus
  * Plugin URI:   https://github.com/rpi-virtuell/rpi-virtuell-materialliste
- * Version:      1.0.3
+ * Version:      1.0.4
  * Author:       Frank Neumann-Staude
  * Author URI:   https://staude.net
  * Text Domain:  rpi-virtuell-materialliste
@@ -38,7 +38,8 @@ function rpivml_materialliste( $atts ) {
 		'zugaenglichkeit' => '',
 		'erscheinungsjahr' => '',
 		'template' => 'default',
-		'per_page' => 1000,
+		'per_page' => 10,
+		'maxwords' => 0
 	), $atts );
 
 	$url = "https://material.rpi-virtuell.de/wp-json/mymaterial/v1/material";
@@ -48,10 +49,14 @@ function rpivml_materialliste( $atts ) {
 			$query .= "&". $key . "=" . $value;
 		}
 	}
+
 	$output = '';
 	$request = $url . $query;
+
+	//var_dump($request); die();
+
 	$hashname = "rpiml_" . md5( $request);
-	if ( false === ( $output = get_transient( $hashname ) ) ) {
+	if ( false === ( $output = get_transient( $hashname ) ) || true) {
 		$response = rpivml_getRemoteMaterial( $request );
 		if ( $response !== false ) {
 			$body = wp_remote_retrieve_body( $response );
@@ -63,11 +68,20 @@ function rpivml_materialliste( $atts ) {
 				$h = \separate\Template::initialize(rpivml_get_template( 'content', $a['template'] ));
 
 				foreach ( $data as $inx => $remote_item_data ) {
+
 					$rowBlock = $h->fetch('row');
 					$rowBlock->assign('material_title', $remote_item_data['material_titel']);
+					$rowBlock->assign('material_date', $remote_item_data['date']);
 					$rowBlock->assign('material_screenshot', "<img src=\"" . $remote_item_data['material_screenshot'] . "\">");
 					$rowBlock->assign('material_kurzbeschreibung', $remote_item_data['material_kurzbeschreibung'] );
-					$rowBlock->assign('material_beschreibung', $remote_item_data['material_beschreibung'] );
+
+					if($a['maxwords']>0){
+						$content = wp_trim_words($remote_item_data['material_beschreibung'] ,$a['maxwords'],'...');
+					}else{
+						$content = $remote_item_data['material_beschreibung'];
+					}
+
+					$rowBlock->assign('material_beschreibung',$content);
 					$rowBlock->assign('material_url', $remote_item_data['material_url']);
 					$rowBlock->assign('material_review_url', $remote_item_data['material_review_url'] );
 					$rowBlock->assign('material_autoren', rpimvl_get2array( $remote_item_data['material_autoren'] ) );
@@ -123,6 +137,7 @@ function rpimvl_getschlagworte2array( $ar) {
 	return ( implode( ', ', $temp ) );
 }
 function rpivml_getRemoteMaterial( $url ) {
+
 	$args = array(
 		'timeout'     => 30,
 		'sslverify' => false,
@@ -142,6 +157,7 @@ function rpivml_getRemoteMaterial( $url ) {
 
 function rpivml_get_template( $type, $template ) {
 	$path = locate_template( apply_filters( 'rpivml_template_folder', 'rpivml-templates' ) . '/' . $template. '/' . $type . '.php' );
+
 	if ( $path != '' ) {
 		return $path;
 	} else {

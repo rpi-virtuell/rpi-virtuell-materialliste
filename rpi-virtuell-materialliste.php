@@ -42,13 +42,27 @@ function rpivml_materialliste( $atts ) {
 		'maxwords' => 0
 	), $atts );
 
-	$url = "https://material.rpi-virtuell.de/wp-json/mymaterial/v1/material";
+    $bildungsstufe = get_post_meta( get_the_ID(), 'materialfeed_bildungsstufe', true );
+    $schlagworte = get_post_meta( get_the_ID(), 'materialfeed_schlagworte', true );
+
+    if($bildungsstufe){
+        $a['bildungsstufe'] = $bildungsstufe;
+    }
+    if ($schlagworte){
+        $a['schlagworte'] = $schlagworte;
+    }
+
+    $url = "https://material.rpi-virtuell.de/wp-json/mymaterial/v1/material";
 	$query = "?";
 	foreach ($a as $key => $value ) {
 		if ($value != '' && $key != 'template' ) {
 			$query .= "&". $key . "=" . $value;
 		}
 	}
+    if( empty($a['bildungsstufe']) && empty($a['schlagworte']) && empty($a['suche']) && empty($a['medientyp']) && empty($a['autor']) && empty($a['schlagworte']) && empty($a['organisation']) && empty($a['sprache']) && empty($a['lizenz']) &&  empty($a['inklusion']) ) {
+        return '';
+    }
+
 
 	$output = '';
 	$request = $url . $query;

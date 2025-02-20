@@ -24,7 +24,7 @@
     }
     @media screen and (max-width: 768px) {
         .rpi-materialiste .container {
-            flex: 1 1 calc(90% - 10px);
+            flex: 1 1 100%;
         }
     }
 
@@ -81,14 +81,15 @@
         display: block;
         max-height: 200px;
         overflow: hidden;
-        border-bottom: 1px solid #ddd;
+        border: 1px solid #ddd;
+        margin-bottom: 10px;
     }
     article .info {
         font-size: 0.875rem;
         color: #333;
         line-height: 1.2rem;
         max-height: 150px;
-        overflow: scroll-y;
+        overflow: auto;
     }
 
     article .short-description {
